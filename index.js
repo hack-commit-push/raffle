@@ -4,17 +4,22 @@ const RaffleCandidateRepository = require('./lib/raffle-candidate-repository');
 const RafflePrizeRepository = require('./lib/raffle-prize-repository');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const token = process.env.SLACK_TOKEN;
 if (!token) {
     throw new Error('Missing envvar SLACK_TOKEN');
 }
 const port = process.env.PORT || 3000;
+const prizeFilePath = process.env.PRIZE_FILE || `${__dirname}/samples/prizes.json`;
+if (!fs.statSync(prizeFilePath).isFile()) {
+    throw new Error(`${prizeFilePath} does not point to a regular file. Please review your PRIZE_FILE envvar configuration`);
+}
 const app = express();
 app.use(express.json());
 
 const candidateRepository = new RaffleCandidateRepository(new WebClient(token));
-const prizeRepository = new RafflePrizeRepository();
+const prizeRepository = new RafflePrizeRepository(prizeFilePath);
 
 (async () => {
     const prizes = await prizeRepository.getPrizes();
