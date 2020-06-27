@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <style>
+        .card {
+            max-width: 20%;
+        }
+    </style>
+    <title>hack-commit-push raffle</title>
+</head>
+<body>
+<div class="container">
+    <div class="jumbotron">
+        <h1 class="display-4">hack-commit-push raffle</h1>
+        <p class="lead">Let's pick some W.I.N.N.E.R.S.!</p>
+
+        <button class="btn btn-primary btn-lg" id="raffle" role="button">Run raffle</button>
+        <button class="btn btn-primary btn-lg" id="raffle-reset" role="button">Reset raffle</button>
+    </div>
+
+    <div class="card-group" id="results">
+    </div>
+
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+<script>
+    let listenersReady = false;
+    const resultArea = document.querySelector("#results");
+    const resetRaffleButton = document.querySelector('#raffle-reset');
+    const runRaffleButton = document.querySelector('#raffle');
+    runRaffleButton.disabled = true;
+    const sync = () => {
+        fetch('/status', {method: 'GET'})
+            .then((response) => response.json())
+            .then((json) => {
+                if (!json._done) {
+                    runRaffleButton.disabled = false;
+                }
+                json._results.forEach(displayResult);
+            })
+            .then(() => {
+                if (!listenersReady) {
+                    setListeners();
+                    listenersReady = true;
+                }
+            })
+    }
+
+    const displayResult = (json) => {
+        resultArea.innerHTML += `
+<div class="card">
+    <img src="${json._winner._avatar}" class="card-img-top" alt="${json._winner._name}">
+    <div class="card-body">
+        <h5 class="card-title">Congratulations to ${json._winner._name}</h5>
+        <p class="card-text">You just won the following prize: ${json._prize._description}!</p>
+    </div>
+</div>
+`;
+    }
+
+    const setListeners = () => {
+        runRaffleButton.addEventListener('click', () => {
+            fetch('/', {method: 'POST'})
+                .then((response) => {
+                    if (response.status === 204) {
+                        return Promise.reject('Raffle completed!');
+                    }
+                    return response.json();
+                })
+                .then((json) => {
+                    displayResult(json);
+                    runRaffleButton.disabled = false;
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        });
+        resetRaffleButton.addEventListener('click', () => {
+            resetRaffleButton.disabled = true;
+            fetch('/reset', {method: 'POST'})
+                .then(() => {
+                    resultArea.innerHTML = '';
+                    resetRaffleButton.disabled = false;
+                    runRaffleButton.disabled = false;
+                });
+        });
+    }
+
+    sync();
+</script>
+</body>
+</html>
