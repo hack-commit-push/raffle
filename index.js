@@ -11,6 +11,7 @@ if (!token) {
 }
 const port = process.env.PORT || 3000;
 const app = express();
+app.use(express.json());
 
 const candidateRepository = new RaffleCandidateRepository(new WebClient(token));
 const prizeRepository = new RafflePrizeRepository();
@@ -29,6 +30,11 @@ const prizeRepository = new RafflePrizeRepository();
 
     app.get('/status', (req, res) => {
         res.status(200).send(raffle.status());
+    });
+
+    app.post('/cancel-winner', (req, res) => {
+        raffle.cancel(req.body.userId);
+        res.status(204).send();
     });
 
     app.post('/reset', (req, res) => {

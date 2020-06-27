@@ -59,15 +59,30 @@
     }
 
     const displayResult = (json) => {
-        resultArea.innerHTML += `
-<div class="card">
-    <img src="${json._winner._avatar}" class="card-img-top" alt="${json._winner._name}">
-    <div class="card-body">
-        <h5 class="card-title">Congratulations to ${json._winner._name}</h5>
-        <p class="card-text">You just won the following prize: ${json._prize._description}!</p>
-    </div>
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.innerHTML = `
+<img src="${json._winner._avatar}" class="card-img-top" alt="${json._winner._name}">
+<div class="card-body">
+    <h5 class="card-title">Congratulations to ${json._winner._name}</h5>
+    <p class="card-text">You just won the following prize: ${json._prize._description}!</p>
 </div>
+
+<button class="btn btn-primary btn-lg" role="button">Cancel</button>
 `;
+        resultArea.appendChild(card)
+        const newCancelButton = card.querySelector('button');
+        newCancelButton.addEventListener('click', () => {
+            newCancelButton.disabled = true;
+            fetch('/cancel-winner', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({userId: json._winner._id})
+            }).then(() => {
+                const cardElement = newCancelButton.parentElement;
+                cardElement.parentElement.removeChild(cardElement);
+            })
+        }, {once: true});
     }
 
     const setListeners = () => {
