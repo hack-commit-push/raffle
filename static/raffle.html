@@ -6,8 +6,11 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
           integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <style>
+        .card-deck {
+            margin-bottom: 2%;
+        }
         .card {
-            max-width: 20%;
+            max-width: 10vw;
         }
     </style>
     <title>hack-commit-push raffle</title>
@@ -59,18 +62,27 @@
     }
 
     const displayResult = (json) => {
+        const cardCount = Array.from(document.querySelectorAll('.card')).length;
+        let deck;
+        if (cardCount % 5 === 0) {
+            deck = document.createElement('div');
+            deck.classList.add('card-deck');
+            resultArea.prepend(deck);
+        } else {
+            deck = resultArea.querySelector(".card-deck:first-child");
+        }
         const card = document.createElement('div');
         card.classList.add('card');
         card.innerHTML = `
 <img src="${json._winner._avatar}" class="card-img-top" alt="${json._winner._name}">
 <div class="card-body">
-    <h5 class="card-title">Congratulations to ${json._winner._name}</h5>
-    <p class="card-text">You just won the following prize: ${json._prize._description}!</p>
+    <h5 class="card-title">Congratulations to <strong>${json._winner._name}</strong></h5>
+    <p class="card-text">You just won the following prize:<br/> <strong>${json._prize._description}</strong>!</p>
 </div>
 
 <button class="btn btn-primary btn-lg" role="button">Cancel</button>
 `;
-        resultArea.appendChild(card)
+        deck.appendChild(card)
         const newCancelButton = card.querySelector('button');
         newCancelButton.addEventListener('click', () => {
             newCancelButton.disabled = true;
