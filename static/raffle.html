@@ -8,9 +8,26 @@
     <style>
         .card-deck {
             margin-bottom: 2%;
+            width: 100%;
         }
+
         .card {
             max-width: 10vw;
+        }
+
+        .countdown {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 123, 255, .3);
+            text-align: center;
+            padding-top: 20px;
+            color: white;
+        }
+
+        .countdown p {
+            font-size: 50pt;
+            -webkit-text-stroke: 1px black;
         }
     </style>
     <title>hack-commit-push raffle</title>
@@ -73,6 +90,7 @@
         }
         const card = document.createElement('div');
         card.classList.add('card');
+        card.id = json._winner._id;
         card.innerHTML = `
 <img src="${json._winner._avatar}" class="card-img-top" alt="${json._winner._name}">
 <div class="card-body">
@@ -80,7 +98,7 @@
     <p class="card-text">You just won the following prize:<br/> <strong>${json._prize._description}</strong>!</p>
 </div>
 
-<button class="btn btn-primary btn-lg" role="button">Cancel</button>
+<button class="cancel btn btn-primary btn-lg" role="button">Cancel</button>
 `;
         deck.appendChild(card)
         const newCancelButton = card.querySelector('button');
@@ -97,6 +115,60 @@
         }, {once: true});
     }
 
+    const displayCountdown = (json) => {
+        let countDown = 10;
+        const winnerId = json._winner._id;
+        const $countdown = document.createElement('div');
+        $countdown.classList.add('countdown');
+        const $card = document.querySelector(`#${winnerId}`);
+        runRaffleButton.disabled = true;
+        resetRaffleButton.disabled = true;
+        const cancelButton = $card.querySelector('button');
+        cancelButton.disabled = true;
+        const confirmWinButton = document.createElement('button');
+        confirmWinButton.setAttribute('role', 'button');
+        confirmWinButton.classList.add('btn', 'btn-primary', 'btn-lg');
+        confirmWinButton.innerText = 'Confirm win';
+        const intervalId = window.setInterval(() => {
+            countDownText.innerText = `${countDown}`;
+            countDown--;
+            if (countDown === -1) {
+                window.clearInterval(intervalId);
+                cancelWin(winnerId, $card);
+                clearCountdown($countdown);
+                cancelButton.disabled = false;
+            }
+        }, 1000);
+
+        confirmWinButton.addEventListener('click', () => {
+            window.clearInterval(intervalId);
+            clearCountdown($countdown);
+            cancelButton.disabled = false;
+        });
+        const countDownText = document.createElement('p');
+        $countdown.appendChild(countDownText);
+        $countdown.appendChild(confirmWinButton);
+        $card.appendChild($countdown)
+    }
+
+    const cancelWin = (winnerId, $card) => {
+        fetch('/cancel-winner', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({userId: winnerId})
+        }).then(() => {
+            $card.remove();
+        })
+    }
+
+    const clearCountdown = ($countdown) => {
+        runRaffleButton.disabled = false;
+        resetRaffleButton.disabled = false;
+        if ($countdown) {
+            $countdown.remove();
+        }
+    }
+
     const setListeners = () => {
         runRaffleButton.addEventListener('click', () => {
             fetch('/', {method: 'POST'})
@@ -108,7 +180,7 @@
                 })
                 .then((json) => {
                     displayResult(json);
-                    runRaffleButton.disabled = false;
+                    displayCountdown(json);
                 })
                 .catch((error) => {
                     console.error(error);
