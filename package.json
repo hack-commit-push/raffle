@@ -1,7 +1,7 @@
 {
   "name": "hcp-paris2020-raffle",
   "version": "0.0.1",
-  "description": "Raffle for https://paris2020.hack-commit-pu.sh",
+  "description": "Raffle for https://hack-commit-pu.sh events",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
