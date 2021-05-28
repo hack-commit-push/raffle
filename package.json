@@ -4,7 +4,6 @@
   "description": "Raffle for https://hack-commit-pu.sh events",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Florent Biville <florent@biville.net>",
   "license": "Apache-2.0",
