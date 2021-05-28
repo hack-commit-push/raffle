@@ -1,32 +1,43 @@
 const {WebClient} = require('@slack/web-api');
 const {Raffle} = require('./lib/raffle');
-const RaffleCandidateRepository = require('./lib/raffle-candidate-repository');
 const RafflePrizeRepository = require('./lib/raffle-prize-repository');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const SlackChannelRepository = require("./lib/slack-channel-repository");
+const SlackUserRepository = require("./lib/slack-user-repository");
+const RaffleCandidateService = require("./lib/raffle-candidate-service");
 
-const token = process.env.SLACK_TOKEN;
-if (!token) {
-    throw new Error('Missing envvar SLACK_TOKEN');
+const readEnvOrFail = (key) => {
+    const result = process.env[key];
+    if (!result) {
+        throw new Error(`Missing envvar ${key}`);
+    }
+    return result;
 }
+
+const checkEnvVarPath = (path, envVar) => {
+    if (!fs.statSync(path).isFile()) {
+        throw new Error(`${path} does not point to a regular file. Please review your ${envVar} envvar configuration`);
+    }
+}
+
+const token = readEnvOrFail('SLACK_TOKEN');
+const attendeeCsvPath = readEnvOrFail('ATTENDEE_CSV_FILE');
+checkEnvVarPath(attendeeCsvPath, 'ATTENDEE_CSV_FILE');
 const port = process.env.PORT || 3000;
 const prizeFilePath = process.env.PRIZE_FILE || `${__dirname}/samples/prizes.json`;
-if (!fs.statSync(prizeFilePath).isFile()) {
-    throw new Error(`${prizeFilePath} does not point to a regular file. Please review your PRIZE_FILE envvar configuration`);
-}
+checkEnvVarPath(prizeFilePath, 'PRIZE_FILE');
 const app = express();
 app.use(express.json());
 
-const candidateRepository = new RaffleCandidateRepository(new WebClient(token));
+const slackClient = new WebClient(token);
 const prizeRepository = new RafflePrizeRepository(prizeFilePath);
+const raffleCandidateService = new RaffleCandidateService(new SlackChannelRepository(slackClient), new SlackUserRepository(slackClient));
 
 (async () => {
     const prizes = await prizeRepository.getPrizes();
-    const initialCandidates = await candidateRepository.getUsers((user) =>
-        !user.is_admin &&
-        !user.is_bot &&
-        user.id !== RaffleCandidateRepository.SLACKBOT_ID);
+    const initialCandidates = await raffleCandidateService.findInitialCandidates();
     const raffle = new Raffle(initialCandidates, prizes);
 
     app.get('/', (req, res) => {

@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "description": "Raffle for https://hack-commit-pu.sh events",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "Florent Biville <florent@biville.net>",
   "license": "Apache-2.0",
   "dependencies": {
