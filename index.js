@@ -23,8 +23,6 @@ const checkEnvVarPath = (path, envVar) => {
 }
 
 const token = readEnvOrFail('SLACK_TOKEN');
-const attendeeCsvPath = readEnvOrFail('ATTENDEE_CSV_FILE');
-checkEnvVarPath(attendeeCsvPath, 'ATTENDEE_CSV_FILE');
 const port = process.env.PORT || 3000;
 const prizeFilePath = process.env.PRIZE_FILE || `${__dirname}/samples/prizes.json`;
 checkEnvVarPath(prizeFilePath, 'PRIZE_FILE');
